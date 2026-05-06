@@ -1,0 +1,3 @@
+[submodule "gromacs"]
+	path = gromacs
+	url = https://gitlab.com/gromacs/gromacs.git
