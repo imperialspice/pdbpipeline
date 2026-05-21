@@ -1,0 +1,79 @@
+# Equilbrium simulations, should they be exclued from mutli-simulation testing? 
+#     Would require either a great many simulations of the same thing or recondensing simulations to a single point before classing them as 
+#     production. 
+
+# Simulation setup should therefore run for a long time before being called production ready.
+
+# Production ready simulations are therefore a good starting point for multisimulations.
+
+# A collection of all results to this point, with raw files from simulations to allow for full processing to take place, not sure what I'll need in the future.
+
+# [ DATABASE ? ] - Filestore and Metadata in relational format?
+# [ Simulation Consumer ] - takes simulations to be ran, with the configuration to run them in and runs them when space becomes available.
+# [ Simulation Container ] - Actually runs the simulations with a known and testing compliation of GROMACS with GPU support, currently AMD for workstation. 
+# [ Uploader ] - A part of the simulation container which uploads results back to the DATABASE.
+
+# Can be dynamically added from database consumer, so reprocessing etc is possible. 
+# [ Anaylitics Consumer ] - takes results and uses them to assess results the designed CQAs, before updating database. 
+
+# -- SQL DATABASE --
+[tables]
+
+[tables.simulation_type]
+    internal_id = ['TEXT', 'PRIMARY KEY', 'DEFAULT (hex(randomblob(64)))']           # 
+    simulation_start = ['INT', 'default 0']         # only set for the start of a simulation chain 
+    mdp_file_hashes = ['TEXT', 'UNQIUE']            # the hash of the mdp file?
+    mdp_file_path = ['TEXT']                        # ( Dumped to disk, allowed to contain any .mdp files, )
+    simulation_version = ['INT', 'default 1']       # Indicates if retesting could be done, ie. superceeded
+    type = ['TEXT']                                 # Simulation type identified, used for familys of simulations
+    next_simulation_id = ['TEXT', 'NOT NULL']       # Pointer to next simulation, with its internal id
+    analytics_to_complete = ['TEXT', 'DEFAULT ""']                # what kind of analytics runs can be done with this?
+    repeats = ['INT', 'DEFAULT 1']
+
+# Captures the individual runs of the simulations, should be a lot of values in here for each run. 
+# Like running simulation type of energy minimisation, should lead to next step of temp minimisation
+# Once setup simulations have been completed, output should be marked with production?
+## Decision : 21/05/26 Seperate out setup 'equlibrium' simulations by allowing production post simulation production to runs table.
+[tables.simulations]
+    internal_id = ['TEXT', 'PRIMARY KEY', 'DEFAULT (hex(randomblob(64)))']                       # internal lookup key
+    protein_id = ['TEXT']                                       # what is the protein id
+    date_added = ['TEXT']                                       # when was this added
+    simulation_type = ['TEXT']                                  # what kind of simulation chain should be performed
+    simulation_production_id = ['TEXT', 'DEFAULT NULL']         # what is the production simulation run id?
+    simulation_working = ['BOOL', 'DEFAULT FALSE']              # Skip if working
+
+    # simulation_results = ['TEXT']
+    # log_files = ['TEXT']
+
+[tables.simulation_runs]
+    internal_id = ['TEXT', 'PRIMARY KEY', 'DEFAULT (hex(randomblob(64)))']       # Internal ID of the simulation run
+    simulation_run_parent = ['TEXT']            # Parent simulation
+    simulation_type_id = ['TEXT']               # What simulation was used when computing this.
+    results_filepath = ['TEXT']                 # where is the zip container with the results?
+    completed_analytics = ['TEXT']              # has working analytics been completed?
+# { Simulation Results }
+# Internal ID                     -
+# Simulation Run Parent           -
+# Type of results                 - ( Energy Minimisation, Temp settling, Pressure Settling, Production movement, Free energy etc.)
+# Results Filepath                -
+# Analytics Complete              - { List of completed analytics by processer}
+[tables.analytics_runs]
+    internal_id = ['TEXT', 'PRIMARY KEY', 'DEFAULT (hex(randomblob(64)))']
+    simulation_run_parent = ['TEXT']                  # What is this analytics run attached too?
+    analysis_type = ['TEXT']                          # what is the analysis type that was completed?
+    analysis_results = ['TEXT']                       #
+# { Analytics Results }
+# Internal ID                 -
+# Simulation Result Parent    - 
+# Type of Analysis            - ( J coupling, backbone metrics? )
+# Analtical Results?          -
+
+# Would allow me to produce, data on the types and methodologys of simulation and compare that to results generated over simulations. 
+
+[data]
+
+[data.simulation_type]
+    test_chain_1 = {rtns = 'internal_id', simulation_start = 1, mdp_file_hashes = 'FILE_HASH+mdp_file_path', mdp_file_path = './mdp_runtime/gen_ions.mdp', type = 'Test Chain', next_simulation_id = 'RTNS_LOOKUP+test_chain_2+internal_id'}
+    test_chain_2 = {rtns = 'internal_id', mdp_file_hashes = 'FILE_HASH+mdp_file_path', mdp_file_path = './mdp_runtime/energy_minimisation.mdp', type = 'Test Chain', next_simulation_id = 'RTNS_LOOKUP+test_chain_3+internal_id'}
+    test_chain_3 = {rtns = 'internal_id', mdp_file_hashes = 'FILE_HASH+mdp_file_path', mdp_file_path = './mdp_runtime/nvt.mdp', type = 'Test Chain', next_simulation_id = 'RTNS_LOOKUP+test_chain_4+internal_id'}
+    test_chain_4 = { mdp_file_hashes = 'FILE_HASH+mdp_file_path', mdp_file_path = './mdp_runtime/npt.mdp', type = 'Test Chain', next_simulation_id = 'PRODUCTION'}

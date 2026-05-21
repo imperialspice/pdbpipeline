@@ -1,1 +1,4 @@
 gromacs/**
+toml_to_db/venv**
+test/*
+*.db

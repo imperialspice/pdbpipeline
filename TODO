@@ -1,0 +1,16 @@
+pdb dynamic stripping, would be easier to do in python or somthing than directly in bash
+though could be done like that if required.
+
+standard simulation options from input pipleine.
+
+[ PDB ] --> [ SIMULATION OPTIONS ] --> [ SOLVATE ] --> [ IONS ] --> [ ENERGY MIN ] --> [ TEMP MIN ] --> [ PRESSURE MIN ] --> [ PRODUCTION FILES ] 
+
+[ NUMBER OF REQUIRED SIMULATIONS TO REACH CONSENSUS ] --> [ SIMULATION ] --> [TRAJ]
+
+Hashing across config files would be a good way of ensuring that benchmarks are similar, allowed to average across runs and versions. 
+
+should allow access to gpu, too surport faster simulations.
+
+saving traj and all intermediate files would be useful, in case more data can be extracted at some point. 
+
+Containers and Bare metal access should both end up in the same enviroment, I imagine both will GPU access etc. But that is certainly possible 
